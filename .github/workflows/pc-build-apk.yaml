@@ -12,79 +12,8 @@ on:
         default: 'Feature updates and bug fixes.'
 
 jobs:
-  android-arm64:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Cache Gradle
-        uses: actions/cache@v3
-        with:
-          key: gradle-cache-${{ hashFiles('starboard/android/apk/**/*gradle*') }}
-          path: |
-            /root/.gradle/caches
-            /root/.gradle/wrapper
-      - name: Set up Cloud SDK
-        uses: isarkis/setup-gcloud@40dce7857b354839efac498d3632050f568090b6
-      - name: Set Android env vars
-        run: |
-          export ANDROID_HOME="$GITHUB_WORKSPACE/Android"
-          mkdir -p "$ANDROID_HOME"
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          PROJECT_NAME=$(gcloud config get-value project)
-      - name: Install GN
-        run: |
-          wget https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/latest -O gn.zip
-          unzip gn.zip -d gn_bin
-          sudo mv gn_bin/gn /usr/local/bin/gn
-          sudo chmod +x /usr/local/bin/gn
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$GITHUB_WORKSPACE:$PYTHONPATH" >> $GITHUB_ENV
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
-        with:
-          java-version: '11'
-          distribution: 'temurin'
-      - name: Install build dependencies
-        run: |
-          sudo apt update && sudo apt install -qqy --no-install-recommends \
-            bison clang libasound2-dev libgles2-mesa-dev libglib2.0-dev \
-            libxcomposite-dev libxi-dev libxrender-dev nasm ninja-build \
-            python3-venv ccache gcc-multilib \
-            g++-multilib libc6-dev-i386 python-is-python3
-          ccache --max-size=20G
-          bash ./starboard/tools/download_clang.sh
-          bash ./starboard/android/shared/download_sdk.sh
-      - name: Ensure Android debug keystore exists
-        run: |
-          if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            mkdir -p "$HOME/.android"
-            keytool -genkey -v -keystore "$HOME/.android/debug.keystore" \
-              -storepass android -alias androiddebugkey -keypass android \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
-      - name: GN
-        run: |
-          gn gen out/android-arm64_gold --args='target_platform="android-arm64" target_os="android" target_cpu="arm64" build_type="gold" sb_api_version=15'
-          gn check out/android-arm64_gold
-      - name: Build Cobalt
-        run: |
-          unset ANDROID_SDK_ROOT
-          NINJA_STATUS="[%e sec | %f/%t %u remaining | %c/sec | j%r] "
-          ninja -C out/android-arm64_gold cobalt_install
-      - name: Upload APK to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: out/android-arm64_gold/cobalt.apk
-          asset_name: cobalt-android-arm64.apk
-          tag: ${{ github.ref_name }}
-          overwrite: true
-
   android-arm:
     runs-on: self-hosted
-    needs: android-arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
