@@ -83,7 +83,7 @@ android {
         versionCode 103
         versionName "${buildId}"
         manifestPlaceholders = [
-            applicationName: "TizenTube",
+            applicationName: "Youtube TV",
             evergreenCompatible: "${evergreenCompatible}"
         ]
         externalNativeBuild {
