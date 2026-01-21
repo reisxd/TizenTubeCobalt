@@ -106,6 +106,9 @@ public class StarboardBridge {
   private final HashMap<String, CobaltService> cobaltServices = new HashMap<>();
   private final HashMap<String, String> crashContext = new HashMap<>();
 
+  // Cached TvChannelBridge instance to avoid creating new instances on each JNI call
+  private TvChannelBridge tvChannelBridge;
+
   private static final String GOOGLE_PLAY_SERVICES_PACKAGE = "com.google.android.gms";
   private static final String AMATI_EXPERIENCE_FEATURE =
       "com.google.android.feature.AMATI_EXPERIENCE";
@@ -887,21 +890,28 @@ public class StarboardBridge {
 
   // Android TV Home Screen Channels API methods
 
+  private synchronized TvChannelBridge getTvChannelBridge() {
+    if (tvChannelBridge == null) {
+      tvChannelBridge = new TvChannelBridge(appContext);
+    }
+    return tvChannelBridge;
+  }
+
   @SuppressWarnings("unused")
   @UsedByNative
   protected void updateWatchProgress(String videoJson) {
-    new TvChannelBridge(appContext).updateWatchProgress(videoJson);
+    getTvChannelBridge().updateWatchProgress(videoJson);
   }
 
   @SuppressWarnings("unused")
   @UsedByNative
   protected void markAsWatched(String videoId) {
-    new TvChannelBridge(appContext).markAsWatched(videoId);
+    getTvChannelBridge().markAsWatched(videoId);
   }
 
   @SuppressWarnings("unused")
   @UsedByNative
   protected void updateRecommendations(String videosJson) {
-    new TvChannelBridge(appContext).updateRecommendations(videosJson);
+    getTvChannelBridge().updateRecommendations(videosJson);
   }
 }

@@ -78,16 +78,21 @@ public class TvChannelManager {
             return false;
         }
 
-        // Verify TV Provider is accessible
+        // Verify TV Provider is accessible (properly close cursor to prevent leak)
+        Cursor cursor = null;
         try {
-            context.getContentResolver().query(
+            cursor = context.getContentResolver().query(
                     TvContractCompat.Channels.CONTENT_URI,
                     new String[]{TvContractCompat.Channels._ID},
                     null, null, null);
-            return true;
+            return cursor != null;
         } catch (Exception e) {
             Log.w(TAG, "TV Provider not accessible", e);
             return false;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
     }
 
@@ -163,22 +168,18 @@ public class TvChannelManager {
     }
 
     private void setChannelLogo(long channelId) {
-        Bitmap logo = null;
         try {
             // Use app icon as channel logo
-            logo = BitmapFactory.decodeResource(
+            // Note: Don't recycle bitmap immediately as ChannelLogoUtils may use it asynchronously
+            Bitmap logo = BitmapFactory.decodeResource(
                     context.getResources(),
                     context.getApplicationInfo().icon);
             if (logo != null) {
                 ChannelLogoUtils.storeChannelLogo(context, channelId, logo);
+                // Logo will be garbage collected when no longer needed
             }
         } catch (Exception e) {
             Log.w(TAG, "Failed to set channel logo", e);
-        } finally {
-            // Recycle bitmap to prevent memory leak
-            if (logo != null && !logo.isRecycled()) {
-                logo.recycle();
-            }
         }
     }
 
@@ -271,7 +272,13 @@ public class TvChannelManager {
     }
 
     private PreviewProgram.Builder createProgramBuilder(VideoItem video, long channelId) {
-        Uri intentUri = Uri.parse("https://www.youtube.com/watch?v=" + video.getVideoId());
+        // Use Uri.Builder to prevent URI injection
+        Uri intentUri = new Uri.Builder()
+                .scheme("https")
+                .authority("www.youtube.com")
+                .path("/watch")
+                .appendQueryParameter("v", video.getVideoId())
+                .build();
 
         PreviewProgram.Builder builder = new PreviewProgram.Builder()
                 .setChannelId(channelId)
@@ -329,5 +336,16 @@ public class TvChannelManager {
      */
     public long getRecommendedChannelId() {
         return prefs.getLong(PREF_RECOMMENDED_CHANNEL_ID, -1);
+    }
+
+    /**
+     * Shutdown the executor service.
+     * Should be called when the app is being destroyed.
+     */
+    public void shutdown() {
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdown();
+            Log.i(TAG, "TvChannelManager executor shut down");
+        }
     }
 }
