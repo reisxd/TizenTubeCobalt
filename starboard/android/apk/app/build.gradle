@@ -213,6 +213,8 @@ dependencies {
     implementation 'androidx.core:core:1.8.0'
     implementation 'androidx.leanback:leanback:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.tvprovider:tvprovider:1.0.0'
+    implementation 'androidx.work:work-runtime:2.8.1'
     implementation 'com.google.android.gms:play-services-ads-identifier:17.0.0'
     implementation 'com.google.android.gms:play-services-auth:18.0.0'
     implementation 'com.google.protobuf:protobuf-lite:3.0.1'

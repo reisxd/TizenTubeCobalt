@@ -16,10 +16,18 @@ package dev.cobalt.app;
 
 import android.app.Application;
 import dev.cobalt.coat.StarboardBridge;
+import dev.cobalt.coat.tvchannel.TvChannelManager;
 
 /** Android Application hosting the Starboard application. */
 public class CobaltApplication extends Application implements StarboardBridge.HostApplication {
   StarboardBridge starboardBridge;
+
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    // Initialize Android TV home screen channels
+    TvChannelManager.getInstance(this).initializeChannels();
+  }
 
   @Override
   public void setStarboardBridge(StarboardBridge starboardBridge) {

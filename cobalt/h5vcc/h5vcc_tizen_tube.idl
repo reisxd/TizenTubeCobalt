@@ -16,4 +16,12 @@ interface H5vccTizenTube {
     boolean InstallAppFromURL(DOMString url);
     DOMString GetVersion();
     boolean SetUserAgent(DOMString user_agent);
+
+    // Android TV Home Screen Channels API
+    // Updates the "Continue Watching" channel with video progress
+    boolean UpdateWatchProgress(DOMString videoJson);
+    // Marks a video as fully watched (removes from Continue Watching)
+    boolean MarkAsWatched(DOMString videoId);
+    // Updates the "Recommended" channel with a list of videos
+    boolean UpdateRecommendations(DOMString videosJson);
 };
