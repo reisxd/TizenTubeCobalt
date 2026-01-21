@@ -39,6 +39,7 @@ import android.view.InputDevice;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.CaptioningManager;
 import androidx.annotation.Nullable;
+import dev.cobalt.coat.tvchannel.TvChannelBridge;
 import dev.cobalt.media.AudioOutputManager;
 import dev.cobalt.util.DisplayUtil;
 import dev.cobalt.util.Holder;
@@ -882,5 +883,25 @@ public class StarboardBridge {
   @UsedByNative
   protected String getBrandAndModel() {
     return Settings.Global.getString(appContext.getContentResolver(), "device_name");
+  }
+
+  // Android TV Home Screen Channels API methods
+
+  @SuppressWarnings("unused")
+  @UsedByNative
+  protected void updateWatchProgress(String videoJson) {
+    new TvChannelBridge(appContext).updateWatchProgress(videoJson);
+  }
+
+  @SuppressWarnings("unused")
+  @UsedByNative
+  protected void markAsWatched(String videoId) {
+    new TvChannelBridge(appContext).markAsWatched(videoId);
+  }
+
+  @SuppressWarnings("unused")
+  @UsedByNative
+  protected void updateRecommendations(String videosJson) {
+    new TvChannelBridge(appContext).updateRecommendations(videosJson);
   }
 }

@@ -82,6 +82,44 @@ bool H5vccTizenTube::SetUserAgent(const std::string& user_agent) const {
   return true;
 }
 
+bool H5vccTizenTube::UpdateWatchProgress(const std::string& video_json) const {
+#if defined(ANDROID)
+  JniEnvExt* env = JniEnvExt::Get();
+  ScopedLocalJavaRef<jstring> j_video_json(
+      env->NewStringStandardUTFOrAbort(video_json.c_str()));
+  env->CallStarboardVoidMethodOrAbort("updateWatchProgress",
+                                       "(Ljava/lang/String;)V",
+                                       j_video_json.Get());
+  return true;
+#endif
+  return false;
+}
+
+bool H5vccTizenTube::MarkAsWatched(const std::string& video_id) const {
+#if defined(ANDROID)
+  JniEnvExt* env = JniEnvExt::Get();
+  ScopedLocalJavaRef<jstring> j_video_id(
+      env->NewStringStandardUTFOrAbort(video_id.c_str()));
+  env->CallStarboardVoidMethodOrAbort("markAsWatched",
+                                       "(Ljava/lang/String;)V",
+                                       j_video_id.Get());
+  return true;
+#endif
+  return false;
+}
+
+bool H5vccTizenTube::UpdateRecommendations(const std::string& videos_json) const {
+#if defined(ANDROID)
+  JniEnvExt* env = JniEnvExt::Get();
+  ScopedLocalJavaRef<jstring> j_videos_json(
+      env->NewStringStandardUTFOrAbort(videos_json.c_str()));
+  env->CallStarboardVoidMethodOrAbort("updateRecommendations",
+                                       "(Ljava/lang/String;)V",
+                                       j_videos_json.Get());
+  return true;
+#endif
+  return false;
+}
 
 }  // namespace h5vcc
 }  // namespace cobalt

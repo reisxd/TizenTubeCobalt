@@ -49,6 +49,11 @@ class H5vccTizenTube : public script::Wrappable {
   std::string GetVersion() const;
   bool SetUserAgent(const std::string& user_agent) const;
 
+  // Android TV Home Screen Channels API
+  bool UpdateWatchProgress(const std::string& video_json) const;
+  bool MarkAsWatched(const std::string& video_id) const;
+  bool UpdateRecommendations(const std::string& videos_json) const;
+
   DEFINE_WRAPPABLE_TYPE(H5vccTizenTube);
 
  private:

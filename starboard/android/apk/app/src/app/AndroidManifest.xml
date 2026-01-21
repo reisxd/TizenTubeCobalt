@@ -32,6 +32,10 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
+  <!-- TV Provider permissions for home screen channels -->
+  <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA"/>
+  <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA"/>
+
   <!-- https://iabtechlab.com/OTT-IFA, AdvertisingIdClient.Info.getId() -->
   <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
   <application
@@ -69,6 +73,13 @@
         <data android:host="m.youtube.com"/>
         <data android:host="youtu.be"/>
         <data android:pathPattern=".*"/>
+      </intent-filter>
+      <!-- Deep link handler for TV home screen channels -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="tizentube"/>
       </intent-filter>
     </activity>
     <provider
