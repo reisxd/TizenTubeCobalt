@@ -25,6 +25,8 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -77,6 +79,13 @@ public abstract class CobaltActivity extends GameActivity {
   private boolean forceCreateNewVideoSurfaceView = false;
 
   private long timeInNanoseconds;
+
+  // Debouncing for video surface bounds changes to improve mini-player/resize performance.
+  // This prevents excessive layout passes during animated transitions.
+  private static final long BOUNDS_UPDATE_DEBOUNCE_MS = 16; // ~1 frame at 60fps
+  private final Handler boundsHandler = new Handler(Looper.getMainLooper());
+  private Runnable pendingBoundsUpdate;
+  private int pendingX, pendingY, pendingWidth, pendingHeight;
 
   private static native void nativeLowMemoryEvent();
 
@@ -174,6 +183,11 @@ public abstract class CobaltActivity extends GameActivity {
 
   @Override
   protected void onDestroy() {
+    // Cancel any pending bounds update to avoid leaks
+    if (pendingBoundsUpdate != null) {
+      boundsHandler.removeCallbacks(pendingBoundsUpdate);
+      pendingBoundsUpdate = null;
+    }
     super.onDestroy();
     getStarboardBridge().onActivityDestroy(this);
   }
@@ -369,31 +383,58 @@ public abstract class CobaltActivity extends GameActivity {
       // The SurfaceView should be covered by our UI layer in this case.
       return;
     }
-    runOnUiThread(
-        new Runnable() {
-          @Override
-          public void run() {
-            LayoutParams layoutParams = videoSurfaceView.getLayoutParams();
-            // Since videoSurfaceView is added directly to the Activity's content view, which is a
-            // FrameLayout, we expect its layout params to become FrameLayout.LayoutParams.
-            if (layoutParams instanceof FrameLayout.LayoutParams) {
-              ((FrameLayout.LayoutParams) layoutParams).setMargins(x, y, x + width, y + height);
-            } else {
-              Log.w(
-                  TAG,
-                  "Unexpected video surface layout params class "
-                      + layoutParams.getClass().getName());
-            }
-            layoutParams.width = width;
-            layoutParams.height = height;
-            // Even though as a NativeActivity we're not using the Android UI framework, by setting
-            // the  layout params it will force a layout to be requested. That will cause the
-            // SurfaceView to position its underlying Surface to match the screen coordinates of
-            // where the view would be in a UI layout and to set the surface transform matrix to
-            // match the view's size.
-            videoSurfaceView.setLayoutParams(layoutParams);
-          }
-        });
+
+    // Store pending bounds values
+    pendingX = x;
+    pendingY = y;
+    pendingWidth = width;
+    pendingHeight = height;
+
+    // Cancel any pending update to avoid redundant layout passes
+    if (pendingBoundsUpdate != null) {
+      boundsHandler.removeCallbacks(pendingBoundsUpdate);
+    }
+
+    // Create the bounds update runnable if needed
+    if (pendingBoundsUpdate == null) {
+      pendingBoundsUpdate = new Runnable() {
+        @Override
+        public void run() {
+          applyVideoSurfaceBounds();
+        }
+      };
+    }
+
+    // Schedule the update after a short delay to batch rapid changes
+    boundsHandler.postDelayed(pendingBoundsUpdate, BOUNDS_UPDATE_DEBOUNCE_MS);
+  }
+
+  /** Applies the pending video surface bounds. Called on UI thread after debounce delay. */
+  private void applyVideoSurfaceBounds() {
+    if (videoSurfaceView == null) {
+      return;
+    }
+
+    LayoutParams layoutParams = videoSurfaceView.getLayoutParams();
+    // Since videoSurfaceView is added directly to the Activity's content view, which is a
+    // FrameLayout, we expect its layout params to become FrameLayout.LayoutParams.
+    if (layoutParams instanceof FrameLayout.LayoutParams) {
+      ((FrameLayout.LayoutParams) layoutParams).setMargins(
+          pendingX, pendingY, pendingX + pendingWidth, pendingY + pendingHeight);
+    } else {
+      Log.w(
+          TAG,
+          "Unexpected video surface layout params class "
+              + layoutParams.getClass().getName());
+    }
+    layoutParams.width = pendingWidth;
+    layoutParams.height = pendingHeight;
+    // Even though as a NativeActivity we're not using the Android UI framework, by setting
+    // the  layout params it will force a layout to be requested. That will cause the
+    // SurfaceView to position its underlying Surface to match the screen coordinates of
+    // where the view would be in a UI layout and to set the surface transform matrix to
+    // match the view's size.
+    videoSurfaceView.setLayoutParams(layoutParams);
   }
 
   private void createNewSurfaceView() {

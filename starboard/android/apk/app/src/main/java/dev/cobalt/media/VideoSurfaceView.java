@@ -81,7 +81,9 @@ public class VideoSurfaceView extends SurfaceView {
 
   private class SurfaceHolderCallback implements SurfaceHolder.Callback {
 
-    boolean sawInitialChange = false;
+    private int lastWidth = 0;
+    private int lastHeight = 0;
+    private boolean sawInitialChange = false;
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
@@ -91,10 +93,14 @@ public class VideoSurfaceView extends SurfaceView {
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-      // We should only ever see the initial change after creation.
-      if (sawInitialChange) {
-        Log.e(TAG, "Video surface changed; decoding may break");
+      // Only log warning if the surface format/size unexpectedly changed after initial creation.
+      // Size changes during mini-player/PiP animations are expected and should not spam logs.
+      if (sawInitialChange && (width != lastWidth || height != lastHeight)) {
+        Log.w(TAG, "Video surface size changed from " + lastWidth + "x" + lastHeight
+            + " to " + width + "x" + height + "; this may affect decoding");
       }
+      lastWidth = width;
+      lastHeight = height;
       sawInitialChange = true;
     }
 
