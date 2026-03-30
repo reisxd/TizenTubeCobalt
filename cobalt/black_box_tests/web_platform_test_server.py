@@ -58,7 +58,7 @@ class WebPlatformTestServer(object):
       with serve.get_ssl_environment(config) as ssl_env:
         _, self._servers = serve.start(config, ssl_env, serve.default_routes(),
                                        **kwargs)
-        self._server_started = True
+        self._server_started.set()
 
         try:
           while any(
@@ -69,11 +69,10 @@ class WebPlatformTestServer(object):
           serve.logger.info('Shutting down')
 
   def __enter__(self):
-    self._server_started = False
+    self._server_started = threading.Event()
     self._server_thread = threading.Thread(target=self.main)
     self._server_thread.start()
-    while not self._server_started:
-      time.sleep(0.1)
+    self._server_started.wait()
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):
