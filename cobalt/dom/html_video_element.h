@@ -61,6 +61,8 @@ class HTMLVideoElement : public HTMLMediaElement {
 
   math::SizeF GetVideoSize() const;
 
+  bool IsVideoPlaybackFitToFillEnabled() const;
+
   DEFINE_WRAPPABLE_TYPE(HTMLVideoElement);
 
  private:

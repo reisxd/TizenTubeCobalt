@@ -43,6 +43,7 @@ class BlockLevelReplacedBox : public ReplacedBox {
       const math::SizeF& content_size,
       base::Optional<render_tree::LottieAnimation::LottieProperties>
           lottie_properties,
+      bool center_crop,
       LayoutStatTracker* layout_stat_tracker);
 
   // From |Box|.

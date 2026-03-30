@@ -27,7 +27,8 @@ using math::RectF;
 using math::SizeF;
 
 LetterboxDimensions GetLetterboxDimensions(
-    const math::SizeF& image_size, const math::SizeF& destination_size) {
+    const math::SizeF& image_size, const math::SizeF& destination_size,
+    bool center_crop) {
   const float kEpsilon = 0.01f;
 
   LetterboxDimensions dimensions;
@@ -50,32 +51,50 @@ LetterboxDimensions GetLetterboxDimensions(
     // The aspect ratio of the Image are the same as the destination.
     dimensions.image_rect = math::RectF(destination_size);
   } else if (image_aspect_ratio > destination_aspect_ratio) {
-    // Image is wider.  We have to put bands on top and bottom.
-    SizeF adjusted_size(destination_size.width(),
-                        destination_size.width() / image_aspect_ratio);
-    float band_height =
-        (destination_size.height() - adjusted_size.height()) / 2;
+    if (center_crop) {
+      // Image is wider, scale to fit height and crop sides.
+      SizeF adjusted_size(destination_size.height() * image_aspect_ratio,
+                          destination_size.height());
+      float crop_width = (adjusted_size.width() - destination_size.width()) / 2;
+      dimensions.image_rect =
+          math::RectF(math::PointF(-crop_width, 0), adjusted_size);
+    } else {
+      // Image is wider.  We have to put bands on top and bottom.
+      SizeF adjusted_size(destination_size.width(),
+                          destination_size.width() / image_aspect_ratio);
+      float band_height =
+          (destination_size.height() - adjusted_size.height()) / 2;
 
-    dimensions.image_rect =
-        math::RectF(math::PointF(0, band_height), adjusted_size);
-    dimensions.fill_rects.push_back(
-        RectF(0, 0, destination_size.width(), band_height));
-    dimensions.fill_rects.push_back(
-        RectF(0, destination_size.height() - band_height,
-              destination_size.width(), band_height));
+      dimensions.image_rect =
+          math::RectF(math::PointF(0, band_height), adjusted_size);
+      dimensions.fill_rects.push_back(
+          RectF(0, 0, destination_size.width(), band_height));
+      dimensions.fill_rects.push_back(
+          RectF(0, destination_size.height() - band_height,
+                destination_size.width(), band_height));
+    }
   } else {
-    // Image is higher.  We have to put bands on left and right.
-    SizeF adjusted_size(destination_size.height() * image_aspect_ratio,
-                        destination_size.height());
-    float band_width = (destination_size.width() - adjusted_size.width()) / 2;
+    if (center_crop) {
+      // Image is higher, scale to fit width and crop top/bottom.
+      SizeF adjusted_size(destination_size.width(),
+                          destination_size.width() / image_aspect_ratio);
+      float crop_height = (adjusted_size.height() - destination_size.height()) / 2;
+      dimensions.image_rect =
+          math::RectF(math::PointF(0, -crop_height), adjusted_size);
+    } else {
+      // Image is higher.  We have to put bands on left and right.
+      SizeF adjusted_size(destination_size.height() * image_aspect_ratio,
+                          destination_size.height());
+      float band_width = (destination_size.width() - adjusted_size.width()) / 2;
 
-    dimensions.image_rect =
-        math::RectF(math::PointF(band_width, 0), adjusted_size);
-    dimensions.fill_rects.push_back(
-        RectF(0, 0, band_width, destination_size.height()));
-    dimensions.fill_rects.push_back(RectF(destination_size.width() - band_width,
-                                          0, band_width,
-                                          destination_size.height()));
+      dimensions.image_rect =
+          math::RectF(math::PointF(band_width, 0), adjusted_size);
+      dimensions.fill_rects.push_back(
+          RectF(0, 0, band_width, destination_size.height()));
+      dimensions.fill_rects.push_back(RectF(destination_size.width() - band_width,
+                                            0, band_width,
+                                            destination_size.height()));
+    }
   }
 
   return dimensions;

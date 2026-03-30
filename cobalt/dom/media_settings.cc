@@ -83,6 +83,12 @@ bool MediaSettingsImpl::Set(const std::string& name, int value) {
       LOG(INFO) << name << ": set to " << value;
       return true;
     }
+  } else if (name == "MediaElement.VideoPlaybackFitToFillEnabled") {
+    if (value == 0 || value == 1) {
+      is_video_playback_fit_to_fill_enabled_ = value != 0;
+      LOG(INFO) << name << ": set to " << value;
+      return true;
+    }
   } else if (name == "MediaElement.EnableUsingMediaSourceBufferedRange") {
     if (value == 0 || value == 1) {
       is_media_element_using_media_source_buffered_range_enabled_ = value != 0;

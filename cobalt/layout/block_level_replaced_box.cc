@@ -33,12 +33,13 @@ BlockLevelReplacedBox::BlockLevelReplacedBox(
     const math::SizeF& content_size,
     base::Optional<render_tree::LottieAnimation::LottieProperties>
         lottie_properties,
+    bool center_crop,
     LayoutStatTracker* layout_stat_tracker)
     : ReplacedBox(css_computed_style_declaration, replace_image_cb,
                   set_bounds_cb, paragraph, text_position,
                   maybe_intrinsic_width, maybe_intrinsic_height,
                   maybe_intrinsic_ratio, used_style_provider, replaced_box_mode,
-                  content_size, lottie_properties, layout_stat_tracker) {}
+                  content_size, lottie_properties, center_crop, layout_stat_tracker) {}
 
 Box::Level BlockLevelReplacedBox::GetLevel() const { return kBlockLevel; }
 

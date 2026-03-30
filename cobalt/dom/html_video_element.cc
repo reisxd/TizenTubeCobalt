@@ -132,3 +132,9 @@ math::SizeF HTMLVideoElement::GetVideoSize() const {
 
 }  // namespace dom
 }  // namespace cobalt
+
+bool HTMLVideoElement::IsVideoPlaybackFitToFillEnabled() const {
+  return GetMediaSettings(environment_settings())
+      .IsVideoPlaybackFitToFillEnabled()
+      .value_or(false);
+}

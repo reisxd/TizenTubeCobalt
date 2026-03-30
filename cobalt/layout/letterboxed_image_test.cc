@@ -110,5 +110,42 @@ TEST(LetterboxedImageTest, HigherImage) {
 }
 
 }  // namespace
+TEST(LetterboxedImageTest, WiderImageCenterCrop) {
+  const SizeF kDestinationSize(300, 200);
+
+  for (int i = 0; i < 10; ++i) {
+    LetterboxDimensions dimensions = GetLetterboxDimensions(
+        Size(5 * (1 << i), 3 * (1 << i)), kDestinationSize, true);
+
+    EXPECT_TRUE(dimensions.fill_rects.empty());
+    ASSERT_TRUE(dimensions.image_rect);
+
+    EXPECT_NEAR(200.0f * (5.0f/3.0f), dimensions.image_rect->width(), 1.0f);
+    EXPECT_NEAR(200.0f, dimensions.image_rect->height(), 1.0f);
+
+    EXPECT_LT(dimensions.image_rect->x(), 0.0f);
+    EXPECT_EQ(0.0f, dimensions.image_rect->y());
+  }
+}
+
+TEST(LetterboxedImageTest, HigherImageCenterCrop) {
+  const SizeF kDestinationSize(300, 200);
+
+  for (int i = 0; i < 10; ++i) {
+    LetterboxDimensions dimensions = GetLetterboxDimensions(
+        Size(4 * (1 << i), 5 * (1 << i)), kDestinationSize, true);
+
+    EXPECT_TRUE(dimensions.fill_rects.empty());
+    ASSERT_TRUE(dimensions.image_rect);
+
+    EXPECT_NEAR(300.0f, dimensions.image_rect->width(), 1.0f);
+    EXPECT_NEAR(300.0f * (5.0f/4.0f), dimensions.image_rect->height(), 1.0f);
+
+    EXPECT_EQ(0.0f, dimensions.image_rect->x());
+    EXPECT_LT(dimensions.image_rect->y(), 0.0f);
+  }
+}
+
 }  // namespace layout
+
 }  // namespace cobalt

@@ -63,6 +63,7 @@ class ReplacedBox : public Box {
               const math::SizeF& content_size,
               base::Optional<render_tree::LottieAnimation::LottieProperties>
                   lottie_properties,
+              bool center_crop,
               LayoutStatTracker* layout_stat_tracker);
 
   // From |Box|.
@@ -133,6 +134,7 @@ class ReplacedBox : public Box {
   math::SizeF content_size_;
   base::Optional<render_tree::LottieAnimation::LottieProperties>
       lottie_properties_;
+  bool center_crop_;
 };
 
 }  // namespace layout

@@ -52,7 +52,8 @@ struct LetterboxDimensions {
 //    The image will be centered horizontally and two filling rectangles placed
 //    on the left and right to fill the blank.
 LetterboxDimensions GetLetterboxDimensions(const math::SizeF& image_size,
-                                           const math::SizeF& destination_size);
+                                           const math::SizeF& destination_size,
+                                           bool center_crop = false);
 
 }  // namespace layout
 }  // namespace cobalt

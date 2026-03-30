@@ -42,6 +42,7 @@ class MediaSettings {
   virtual base::Optional<int>
   GetMediaElementTimeupdateEventIntervalInMilliseconds() const = 0;
   virtual base::Optional<bool> IsPaintingVideoBackgroundToBlack() const = 0;
+  virtual base::Optional<bool> IsVideoPlaybackFitToFillEnabled() const = 0;
   virtual base::Optional<bool>
   IsMediaElementUsingMediaSourceBufferedRangeEnabled() const = 0;
   virtual base::Optional<bool>
@@ -98,6 +99,9 @@ class MediaSettingsImpl : public MediaSettings {
   base::Optional<bool> IsPaintingVideoBackgroundToBlack() const override {
     return is_painting_video_background_to_black_;
   }
+  base::Optional<bool> IsVideoPlaybackFitToFillEnabled() const override {
+    return is_video_playback_fit_to_fill_enabled_;
+  }
   base::Optional<bool> IsMediaElementUsingMediaSourceBufferedRangeEnabled()
       const override {
     base::AutoLock auto_lock(lock_);
@@ -136,6 +140,7 @@ class MediaSettingsImpl : public MediaSettings {
   base::Optional<bool> is_mse_in_workers_enabled_;
 
   base::Optional<bool> is_painting_video_background_to_black_;
+  base::Optional<bool> is_video_playback_fit_to_fill_enabled_;
 };
 
 }  // namespace dom

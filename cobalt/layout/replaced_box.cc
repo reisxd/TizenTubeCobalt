@@ -109,6 +109,7 @@ ReplacedBox::ReplacedBox(
     const math::SizeF& content_size,
     base::Optional<render_tree::LottieAnimation::LottieProperties>
         lottie_properties,
+    bool center_crop,
     LayoutStatTracker* layout_stat_tracker)
     : Box(css_computed_style_declaration, used_style_provider,
           layout_stat_tracker),
@@ -124,7 +125,8 @@ ReplacedBox::ReplacedBox(
       text_position_(text_position),
       replaced_box_mode_(replaced_box_mode),
       content_size_(content_size),
-      lottie_properties_(lottie_properties) {}
+      lottie_properties_(lottie_properties),
+      center_crop_(center_crop) {}
 
 WrapResult ReplacedBox::TryWrapAt(WrapAtPolicy wrap_at_policy,
                                   WrapOpportunityPolicy wrap_opportunity_policy,
@@ -252,7 +254,7 @@ void AnimateVideoImage(const ReplacedBox::ReplaceImageCB& replace_image_cb,
 // destination box size.
 void AnimateVideoWithLetterboxing(
     const ReplacedBox::ReplaceImageCB& replace_image_cb,
-    math::SizeF destination_size,
+    math::SizeF destination_size, bool center_crop,
     CompositionNode::Builder* composition_node_builder) {
   DCHECK(!replace_image_cb.is_null());
   DCHECK(composition_node_builder);
@@ -283,7 +285,7 @@ void AnimateVideoWithLetterboxing(
 
   if (image) {
     AddLetterboxedImageToRenderTree(
-        GetLetterboxDimensions(image->GetSize(), destination_size), image,
+        GetLetterboxDimensions(image->GetSize(), destination_size, center_crop), image,
         composition_node_builder);
   }
 }
@@ -757,7 +759,7 @@ void ReplacedBox::RenderAndAnimateContentWithLetterboxing(
 
   if (*replaced_box_mode_ == ReplacedBoxMode::kPunchOutVideo) {
     LetterboxDimensions letterbox_dims =
-        GetLetterboxDimensions(content_size_, content_box_size());
+        GetLetterboxDimensions(content_size_, content_box_size(), center_crop_);
     AddLetterboxedPunchThroughVideoNodeToRenderTree(
         letterbox_dims, set_bounds_cb_, border_node_builder);
 
@@ -765,7 +767,7 @@ void ReplacedBox::RenderAndAnimateContentWithLetterboxing(
     AnimateNode::Builder animate_node_builder;
     animate_node_builder.Add(composition_node,
                              base::Bind(&AnimateVideoWithLetterboxing,
-                                        replace_image_cb_, content_box_size()));
+                                        replace_image_cb_, content_box_size(), center_crop_));
     border_node_builder->AddChild(
         new AnimateNode(animate_node_builder, composition_node));
   }
