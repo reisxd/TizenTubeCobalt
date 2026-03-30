@@ -1,9 +1,9 @@
 name: android_release
 
-# on:
-#   push:
-#     tags:
-#       - 'v*'
+on:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   android-arm64:
