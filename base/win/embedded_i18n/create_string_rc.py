@@ -61,6 +61,7 @@ Note: MODE_SPECIFIC_STRINGS cannot be specified if STRING_IDS is not specified.
 from __future__ import print_function
 
 import argparse
+import ast
 import glob
 import io
 import os
@@ -558,16 +559,33 @@ def main():
   # was specified.
   extract_datafile = args.extract_datafile
   if extract_datafile:
-    datafile_locals = dict();
-    exec(open(extract_datafile).read(), globals(), datafile_locals)
-    if 'STRING_IDS' in datafile_locals:
-      string_ids_to_extract = datafile_locals['STRING_IDS']
-    if 'MODE_SPECIFIC_STRINGS' in datafile_locals:
-      if not string_ids_to_extract:
-        parser.error('MODE_SPECIFIC_STRINGS was specified in file ' +
-          extract_datafile + ' but there were no specific STRING_IDS '
-          'specified for extraction')
-      mode_specific_strings = datafile_locals['MODE_SPECIFIC_STRINGS']
+    with open(extract_datafile, 'r') as f:
+      try:
+        tree = ast.parse(f.read(), filename=extract_datafile)
+      except SyntaxError as e:
+        parser.error('Failed to parse ' + extract_datafile + ': ' + str(e))
+
+      has_string_ids = False
+      has_mode_specific_strings = False
+      for node in tree.body:
+        if isinstance(node, ast.Assign):
+          for target in node.targets:
+            if isinstance(target, ast.Name):
+              try:
+                if target.id == 'STRING_IDS':
+                  string_ids_to_extract = ast.literal_eval(node.value)
+                  has_string_ids = True
+                elif target.id == 'MODE_SPECIFIC_STRINGS':
+                  mode_specific_strings = ast.literal_eval(node.value)
+                  has_mode_specific_strings = True
+              except ValueError as e:
+                parser.error('Non-literal content in ' + extract_datafile +
+                             ' for ' + target.id + ': ' + str(e))
+
+    if has_mode_specific_strings and not has_string_ids:
+      parser.error('MODE_SPECIFIC_STRINGS was specified in file ' +
+                   extract_datafile + ' but there were no specific '
+                   'STRING_IDS specified for extraction')
 
   brand = args.brand
   if brand:
