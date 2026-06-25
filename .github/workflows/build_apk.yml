@@ -18,15 +18,15 @@ jobs:
 
       - name: Download apktool
         run: |
-          curl -Lo apktool.jar \
-            https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
+          curl -Lo apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
 
       - name: Download latest TizenTubeCobalt APK
         run: |
-          APK_URL=$(curl -s https://api.github.com/repos/reisxd/TizenTubeCobalt/releases/latest \
-            | grep "browser_download_url.*apk" \
-            | head -1 \
-            | cut -d '"' -f 4)
+          APK_URL=$(curl -s https://api.github.com/repos/reisxd/TizenTubeCobalt/releases/latest | grep "browser_download_url.*apk" | head -1 | cut -d '"' -f 4)
+          if [ -z "$APK_URL" ]; then
+            echo "ERROR: Could not find APK download URL"
+            exit 1
+          fi
           echo "Downloading: $APK_URL"
           curl -Lo tizentube.apk "$APK_URL"
           ls -lh tizentube.apk
@@ -35,35 +35,47 @@ jobs:
         run: |
           java -jar apktool.jar d tizentube.apk -o apk_out -f
 
-      - name: Copy VOT script to assets
+      - name: Generate vot.js asset
         run: |
           mkdir -p apk_out/assets
-          cp vot.js apk_out/assets/vot.js
-          echo "VOT script copied: $(wc -c < apk_out/assets/vot.js) bytes"
+          cat > apk_out/assets/vot.js <<'EOF'
+          (function(){
+            'use strict';
+            var VOT_WORKER='https://vot-worker.toil.cc';
+            function addBtn(){
+              if(document.getElementById('vot-btn')) return;
+              var b=document.createElement('button');
+              b.id='vot-btn';
+              b.textContent='?? ???????';
+              b.style='position:fixed;bottom:70px;right:16px;z-index:99999;padding:10px 20px;background:#111;color:#fff;border:2px solid #f90;border-radius:10px;';
+              b.onclick=function(){ console.log('[VOT] toggle requested'); };
+              document.body.appendChild(b);
+            }
+            function postProto(url, body){
+              return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-protobuf'},body:body});
+            }
+            if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',addBtn); else addBtn();
+          })();
+          EOF
+          echo "vot.js bytes: $(wc -c < apk_out/assets/vot.js)"
 
-      - name: Show smali structure
+      - name: Inject VOT into runtime JS bundle
         run: |
-          echo "=== CobaltActivity smali files ==="
-          find apk_out/smali* -name "CobaltActivity*.smali" 2>/dev/null
-          echo ""
-          echo "=== CobaltActivity\$2 content ==="
-          SMALI=$(find apk_out/smali* -name "CobaltActivity\$2.smali" | head -1)
-          cat "$SMALI"
-
-      - name: Patch smali
-        run: |
-          SMALI=$(find apk_out/smali* -name "CobaltActivity\$2.smali" | head -1)
-          echo "Patching: $SMALI"
-          python3 patch_smali.py "$SMALI"
+          JS_BUNDLE=$(find apk_out/assets -maxdepth 1 -name "*.js" -type f -printf '%s %p\n' | sort -rn | head -1 | awk '{print $2}')
+          if [ -z "$JS_BUNDLE" ] || [ ! -f "$JS_BUNDLE" ]; then
+            echo "ERROR: Runtime JS bundle not found under apk_out/assets"
+            exit 1
+          fi
+          echo "Target runtime bundle: $JS_BUNDLE"
+          echo "" >> "$JS_BUNDLE"
+          echo "// === Injected VOT script ===" >> "$JS_BUNDLE"
+          cat apk_out/assets/vot.js >> "$JS_BUNDLE"
+          echo "// === End injected VOT script ===" >> "$JS_BUNDLE"
+          echo "Updated runtime bundle bytes: $(wc -c < "$JS_BUNDLE")"
 
       - name: Generate keystore
         run: |
-          keytool -genkey -v \
-            -keystore debug.keystore \
-            -alias androiddebugkey \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass android -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US"
+          keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Recompile APK
         run: |
@@ -72,14 +84,13 @@ jobs:
 
       - name: Align and sign APK
         run: |
-          BT=$ANDROID_SDK_ROOT/build-tools/$(ls $ANDROID_SDK_ROOT/build-tools | sort -V | tail -1)
-          $BT/zipalign -v 4 tizentube_vot_unsigned.apk tizentube_vot_aligned.apk
-          $BT/apksigner sign \
-            --ks debug.keystore \
-            --ks-pass pass:android \
-            --key-pass pass:android \
-            --out tizentube_vot.apk \
-            tizentube_vot_aligned.apk
+          BT=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -1)
+          if [ ! -x "$BT/zipalign" ] || [ ! -x "$BT/apksigner" ]; then
+            echo "ERROR: zipalign/apksigner not found in $BT"
+            exit 1
+          fi
+          "$BT/zipalign" -v 4 tizentube_vot_unsigned.apk tizentube_vot_aligned.apk
+          "$BT/apksigner" sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android --out tizentube_vot.apk tizentube_vot_aligned.apk
           ls -lh tizentube_vot.apk
 
       - name: Upload APK
