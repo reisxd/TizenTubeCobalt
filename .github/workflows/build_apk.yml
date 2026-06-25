@@ -18,18 +18,16 @@ jobs:
 
       - name: Download apktool
         run: |
-          curl -Lo apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
+          curl -fL --retry 5 --retry-all-errors -o apktool.jar \
+            https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
 
       - name: Download latest TizenTubeCobalt APK
         run: |
-          APK_URL=$(curl -s https://api.github.com/repos/reisxd/TizenTubeCobalt/releases/latest | grep "browser_download_url.*apk" | head -1 | cut -d '"' -f 4)
-          if [ -z "$APK_URL" ]; then
-            echo "ERROR: Could not find APK download URL"
-            exit 1
-          fi
+          APK_URL="https://github.com/reisxd/TizenTubeCobalt/releases/latest/download/cobalt-arm64.apk"
           echo "Downloading: $APK_URL"
-          curl -Lo tizentube.apk "$APK_URL"
+          curl -fL --retry 5 --retry-all-errors -o tizentube.apk "$APK_URL"
           ls -lh tizentube.apk
+          unzip -tq tizentube.apk >/dev/null || { echo "ERROR: Downloaded file is not a valid APK zip"; exit 1; }
 
       - name: Decompile APK
         run: |
