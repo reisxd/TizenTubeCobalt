@@ -82,6 +82,8 @@ class GlobalFeatures {
   const absl::flat_hash_map<std::string, SettingValue>& GetSettings() const;
   void SetSettings(const std::string& key, const SettingValue& value);
 
+  static constexpr char kUserAgentOverridePrefName[] = "user_agent_override";
+
  private:
   friend class base::NoDestructor<GlobalFeatures>;
 
@@ -94,6 +96,8 @@ class GlobalFeatures {
   void CreateMetricsServices();
   // Initialize a PrefService instance for local state for Metrics services.
   void CreateMetricsLocalState();
+  // Restore persisted settings from the pref store into memory.
+  void RestorePersistedSettings();
   // Initialize a PrefService instance for local state.
   void CreateLocalState();
   // Record the active config data in the member variable to preserve the active
