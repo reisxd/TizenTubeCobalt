@@ -45,6 +45,7 @@ constexpr base::FilePath::CharType kMetricsConfigFilename[] =
 GlobalFeatures::GlobalFeatures() {
   CreateExperimentConfig();
   CreateMetricsServices();
+  RestorePersistedSettings();
   // InitializeActiveConfigData needs ExperimentConfigManager to determine
   // the experiment config type.
   experiment_config_manager_ = std::make_unique<ExperimentConfigManager>(
@@ -87,6 +88,11 @@ PrefService* GlobalFeatures::metrics_local_state() {
   return metrics_local_state_.get();
 }
 
+PrefService* GlobalFeatures::local_state() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  return metrics_local_state_.get();
+}
+
 void GlobalFeatures::set_accessor(
     std::unique_ptr<base::FeatureList::Accessor> accessor) {
   accessor_ = std::move(accessor);
@@ -102,6 +108,12 @@ void GlobalFeatures::SetSettings(const std::string& key,
                                  const SettingValue& value) {
   base::AutoLock auto_lock(lock_);
   settings_[key] = value;
+
+  if (metrics_local_state_ && key == kUserAgentOverridePrefName) {
+    if (const auto* user_agent = std::get_if<std::string>(&value)) {
+      metrics_local_state_->SetString(kUserAgentOverridePrefName, *user_agent);
+    }
+  }
 
   LOG(INFO) << "SetSettings: key=" << key << ", value=" << [&value] {
     if (const auto* s = std::get_if<std::string>(&value)) {
@@ -152,6 +164,8 @@ void GlobalFeatures::CreateMetricsLocalState() {
   // call, etc., this is the setting that's overridden).
   pref_registry->RegisterBooleanPref(metrics::prefs::kMetricsReportingEnabled,
                                      false);
+  pref_registry->RegisterStringPref(kUserAgentOverridePrefName,
+                                     std::string());
   base::FilePath path =
       GetPrefFilePath(kMetricsConfigFilename, "metrics config");
 
@@ -162,6 +176,22 @@ void GlobalFeatures::CreateMetricsLocalState() {
       base::MakeRefCounted<JsonPrefStore>(path));
 
   metrics_local_state_ = pref_service_factory.Create(std::move(pref_registry));
+}
+
+void GlobalFeatures::RestorePersistedSettings() {
+  if (!metrics_local_state_) {
+    return;
+  }
+
+  const std::string persisted_user_agent_override =
+      metrics_local_state_->GetString(kUserAgentOverridePrefName);
+
+  base::AutoLock auto_lock(lock_);
+  if (persisted_user_agent_override.empty()) {
+    settings_.erase(kUserAgentOverridePrefName);
+  } else {
+    settings_[kUserAgentOverridePrefName] = persisted_user_agent_override;
+  }
 }
 
 void GlobalFeatures::InitializeActiveConfigData() {

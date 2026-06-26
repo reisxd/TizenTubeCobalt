@@ -109,6 +109,18 @@ TEST_F(GlobalFeaturesTest, GetMetricsServicesManagerReturnsSameInstance) {
   EXPECT_NE(nullptr, manager1);
 }
 
+TEST_F(GlobalFeaturesTest, SaveUserAgentOverrideToPersistentPrefs) {
+  ASSERT_NE(instance_, nullptr);
+  const std::string kUserAgentOverride = "spoofed-ua";
+
+  instance_->SetSettings(GlobalFeatures::kUserAgentOverridePrefName,
+                         kUserAgentOverride);
+
+  EXPECT_EQ(kUserAgentOverride,
+            instance_->metrics_local_state()->GetString(
+                GlobalFeatures::kUserAgentOverridePrefName));
+}
+
 TEST_F(GlobalFeaturesTest, RegisterPrefsRegistersExpectedPrefs) {
   TestingPrefServiceSimple pref_service;
   GlobalFeatures::RegisterPrefs(pref_service.registry());
