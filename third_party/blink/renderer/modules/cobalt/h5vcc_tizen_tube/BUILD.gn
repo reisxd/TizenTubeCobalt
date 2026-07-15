@@ -20,5 +20,5 @@ blink_modules_sources("h5vcc_tizen_tube") {
     "h_5_vcc_tizen_tube.h",
   ]
 
-  deps = [ "//cobalt/browser/h5vcc_tizentube/public/mojom:mojom_blink", "//starboard/android/shared:starboard_platform" ]
+  deps = [ "//cobalt/browser/h5vcc_tizentube/public/mojom:mojom_blink",  ]
 }
