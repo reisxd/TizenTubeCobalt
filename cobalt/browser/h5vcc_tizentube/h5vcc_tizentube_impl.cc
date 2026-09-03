@@ -43,17 +43,12 @@ H5vccTizentubeImpl::H5vccTizentubeImpl(
     content::RenderFrameHost& render_frame_host,
     mojo::PendingReceiver<mojom::H5vccTizentube> receiver)
     : content::DocumentService<mojom::H5vccTizentube>(render_frame_host,
-                                                       std::move(receiver)) {}
+                                                      std::move(receiver)) {}
 
 void H5vccTizentubeImpl::InstallAppFromURL(const std::string& url, InstallAppFromURLCallback callback) {
-  // Implementation for installing app from URL
-  #if BUILDFLAG(IS_ANDROID)
-    JNIEnv* env = AttachCurrentThread();
-    bool result = StarboardBridge::GetInstance()->InstallAppFromURL(env, url.c_str());
-    std::move(callback).Run(result);
-    return;
-  #endif  // BUILDFLAG(IS_ANDROID)
-  std::move(callback).Run(false); // Placeholder implementation
+  // Disables automatic updates completely by always returning false
+  std::move(callback).Run(false);
+  return;
 }
 
 void H5vccTizentubeImpl::GetVersion(GetVersionCallback callback) {
