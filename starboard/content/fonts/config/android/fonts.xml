@@ -145,10 +145,10 @@
          of having a name, it will still be included as a fallback font.
     -->
     <family lang="und-Arab">
-        <font weight="400" style="normal">NotoNaskhArabic-Regular.ttf</font>
-        <font weight="700" style="normal">NotoNaskhArabic-Bold.ttf</font>
         <font weight="400" style="normal">NotoNaskhArabicUI-Regular.ttf</font>
         <font weight="700" style="normal">NotoNaskhArabicUI-Bold.ttf</font>
+        <font weight="400" style="normal">NotoNaskhArabic-Regular.ttf</font>
+        <font weight="700" style="normal">NotoNaskhArabic-Bold.ttf</font>
     </family>
     <family lang="und-Ethi">
         <font weight="400" style="normal">NotoSansEthiopic-Regular.ttf</font>

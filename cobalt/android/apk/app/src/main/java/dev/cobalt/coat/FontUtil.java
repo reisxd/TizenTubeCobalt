@@ -52,9 +52,8 @@ public class FontUtil {
     String fileName = "cobalt_android_fonts.xml";
     File targetFile = new File(storageDir, fileName);
     try (InputStream is = context.getAssets().open(asset)) {
-      if (targetFile.exists() && targetFile.length() == is.available()) {
-        return;
-      }
+      // Equal file lengths do not imply equal font configuration contents.
+      // Refresh on cold start so same-size asset updates reach existing installs.
       try (FileOutputStream fos = new FileOutputStream(targetFile)) {
         byte[] buf = new byte[8192];
         int len;
