@@ -43,6 +43,8 @@
     <!-- DIAL server requires permission to query running apps and tasks -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.GET_TASKS" />
+    <!-- Home screen rows and Continue Watching (HomeChannels.java); granted at install -->
+    <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
 
     <!-- https://iabtechlab.com/OTT-IFA, AdvertisingIdClient.Info.getId() -->
     {% if enable_ad_id_permission %}

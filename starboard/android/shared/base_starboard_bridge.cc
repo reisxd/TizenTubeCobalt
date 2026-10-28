@@ -517,6 +517,12 @@ void StarboardBridge::ShowAlertDialog(JNIEnv* env,
       ConvertUTF8ToJavaString(env, message));
 }
 
+void StarboardBridge::PublishHomeScreen(JNIEnv* env, const char* json) const {
+  SB_CHECK(env);
+  Java_BaseStarboardBridge_publishHomeScreen(env, j_starboard_bridge_,
+                                             ConvertUTF8ToJavaString(env, json));
+}
+
 void StarboardBridge::SetStartupDiagnosisInfo(const char* key,
                                               const char* value) const {
   JNIEnv* env = AttachCurrentThread();

@@ -1183,6 +1183,12 @@ public class BaseStarboardBridge {
     });
   }
 
+  /** Rows and Continue Watching for the home screen, from the web app. Returns immediately. */
+  @CalledByNative
+  protected void publishHomeScreen(String json) {
+    HomeChannels.publish(mAppContext, json);
+  }
+
   private static boolean isMultiple(float refreshRate, float fps, float tolerance) {
     float ratio = refreshRate / fps;
     float nearestInt = Math.round(ratio);

@@ -30,4 +30,5 @@ interface H5vccTizenTube {
   [CallWith=ScriptState, RaisesException]
   boolean HasSystemFeature(DOMString feature_name);
   void ShowAlertDialog(DOMString title, DOMString message);
+  void PublishHomeScreen(DOMString json);
 };

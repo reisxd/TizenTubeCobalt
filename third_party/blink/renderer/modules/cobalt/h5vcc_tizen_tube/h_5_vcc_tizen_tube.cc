@@ -22,7 +22,9 @@
 #include "third_party/blink/renderer/core/dom/dom_exception.h"
 #include "third_party/blink/renderer/core/execution_context/execution_context.h"
 #include "third_party/blink/renderer/core/frame/local_dom_window.h"
+#include "third_party/blink/renderer/core/frame/local_frame.h"
 #include "third_party/blink/renderer/platform/bindings/exception_state.h"
+#include "third_party/blink/renderer/platform/weborigin/security_origin.h"
 #include "third_party/blink/renderer/platform/wtf/functional.h"
 #include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
 #if BUILDFLAG(IS_ANDROID)
@@ -175,6 +177,32 @@ void H5vccTizenTube::ShowAlertDialog(
     auto* env = base::android::AttachCurrentThread();
     starboard::StarboardBridge* bridge = starboard::StarboardBridge::GetInstance();
     bridge->ShowAlertDialog(env, title.Utf8().data(), message.Utf8().data());
+  #endif // BUILDFLAG(IS_ANDROID)
+}
+
+void H5vccTizenTube::PublishHomeScreen(const WTF::String& json) {
+  // Same cap as the Java side; anything bigger is not a payload we sent.
+  if (json.IsNull() || json.length() == 0 || json.length() > 512 * 1024) {
+    return;
+  }
+
+  // Only the YouTube page this app runs, in its top-level frame over HTTPS on the default port,
+  // may put things on the home screen. ToString() is the serialised origin, e.g.
+  // "https://www.youtube.com", so scheme, host and port must all match.
+  auto* window = DynamicTo<LocalDOMWindow>(GetExecutionContext());
+  if (!window || !window->GetFrame() || !window->GetFrame()->IsMainFrame()) {
+    return;
+  }
+  const WTF::String origin = window->GetSecurityOrigin()->ToString();
+  if (origin != "https://www.youtube.com" && origin != "https://youtube.com" &&
+      origin != "https://m.youtube.com") {
+    return;
+  }
+
+  #if BUILDFLAG(IS_ANDROID)
+    auto* env = base::android::AttachCurrentThread();
+    starboard::StarboardBridge* bridge = starboard::StarboardBridge::GetInstance();
+    bridge->PublishHomeScreen(env, json.Utf8().data());
   #endif // BUILDFLAG(IS_ANDROID)
 }
 

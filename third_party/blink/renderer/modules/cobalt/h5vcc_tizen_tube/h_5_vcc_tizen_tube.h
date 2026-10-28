@@ -66,6 +66,8 @@ class MODULES_EXPORT H5vccTizenTube final
                         ExceptionState& exception_state);
   void ShowAlertDialog(const WTF::String& title,
                         const WTF::String& message);
+  // Rows and Continue Watching for the Android TV home screen (JSON, see HomeChannels.java).
+  void PublishHomeScreen(const WTF::String& json);
 
   bool EnsureReceiverIsBound();
 

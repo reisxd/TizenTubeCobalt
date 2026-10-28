@@ -118,6 +118,7 @@ class StarboardBridge {
   void EnterPIP(JNIEnv* env) const;
   bool HasSystemFeature(JNIEnv* env, const char* feature_name) const;
   void ShowAlertDialog(JNIEnv* env, const char* title, const char* message) const;
+  void PublishHomeScreen(JNIEnv* env, const char* json) const;
 
   void SetStartupMilestone(jint milestone) const;
   void SetStartupDiagnosisInfo(const char* key, const char* value) const;

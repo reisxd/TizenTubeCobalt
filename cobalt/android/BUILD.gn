@@ -162,6 +162,7 @@ android_library("cobalt_main_java") {
     "apk/app/src/main/java/dev/cobalt/coat/CrashContextUpdateHandler.java",
     "apk/app/src/main/java/dev/cobalt/coat/ErrorDialog.java",
     "apk/app/src/main/java/dev/cobalt/coat/FontUtil.java",
+    "apk/app/src/main/java/dev/cobalt/coat/HomeChannels.java",
     "apk/app/src/main/java/dev/cobalt/coat/KeyboardUtils.java",
     "apk/app/src/main/java/dev/cobalt/coat/NetworkStatus.java",
     "apk/app/src/main/java/dev/cobalt/coat/NullCobaltFactory.java",
