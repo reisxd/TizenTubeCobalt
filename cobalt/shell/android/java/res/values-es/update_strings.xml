@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 The Cobalt Authors. Licensed under the Apache License, Version 2.0. -->
+<resources>
+    <string name="tizentube_update_title">Actualización de TizenTube</string>
+    <string name="tizentube_update_progress">Descargando: %1$d%%\n%2$s de %3$s</string>
+    <string name="tizentube_update_unknown_size">Descargando: %1$s\nTamaño total no disponible</string>
+    <string name="tizentube_update_retrying">Conexión interrumpida. Reintentando (%1$d/%2$d)…</string>
+    <string name="tizentube_update_ready">Descarga verificada. Selecciona Instalar para continuar con Android.</string>
+    <string name="tizentube_update_install">Instalar</string>
+    <string name="tizentube_update_permission">Permite que esta app instale actualizaciones en los ajustes de Android y vuelve aquí.</string>
+    <string name="tizentube_update_permission_unavailable">Abre los ajustes de Android y permite que esta app instale aplicaciones desconocidas. Después selecciona Instalar de nuevo.</string>
+    <string name="tizentube_update_installing">El instalador de Android está abierto. Sigue sus indicaciones para terminar.</string>
+    <string name="tizentube_update_install_cancelled">Se canceló la instalación. La actualización descargada sigue disponible.</string>
+    <string name="tizentube_update_install_returned">El instalador se cerró. Si no terminó la actualización, selecciona Instalar para reintentar.</string>
+    <string name="tizentube_update_no_installer">No se pudo abrir el instalador de Android. Reintenta o instala el APK oficial manualmente.</string>
+    <string name="tizentube_update_invalid_apk">El APK no es una actualización posterior compatible firmada con el mismo certificado que esta app. No se instalará.</string>
+    <string name="tizentube_update_network_error">No se pudo completar la descarga después de tres intentos. Revisa la conexión y selecciona Reintentar.</string>
+    <string name="tizentube_update_storage_error">No se pudo guardar la actualización. Libera espacio y selecciona Reintentar.</string>
+    <string name="tizentube_update_download_error">El servidor no proporcionó una descarga válida. Cierra esta pantalla y busca actualizaciones de nuevo.</string>
+    <string name="tizentube_update_start_failed">No se pudo abrir el gestor de actualizaciones. Reintenta.</string>
+</resources>

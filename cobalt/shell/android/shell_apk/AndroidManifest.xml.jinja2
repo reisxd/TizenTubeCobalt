@@ -63,6 +63,11 @@
             android:label="{% block application_label %}TizenTube{% endblock %}">
         {# Always enable profileable for development. This manifest is only used for the development shell (CoAT) and does not affect the production Kimono app. #}
         <profileable android:shell="true" android:enabled="true" />
+        <activity android:name="dev.cobalt.coat.CobaltUpdateActivity"
+                  android:exported="false"
+                  android:launchMode="singleTask"
+                  android:theme="@android:style/Theme.Material.NoActionBar"
+                  android:screenOrientation="landscape" />
         {% block main_activity %}
         <activity android:name="dev.cobalt.app.MainActivity"
                   android:launchMode="singleTask"

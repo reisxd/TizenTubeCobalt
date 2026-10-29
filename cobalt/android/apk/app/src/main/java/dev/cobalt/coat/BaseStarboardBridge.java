@@ -26,6 +26,7 @@ import android.app.ApplicationExitInfo;
 import android.app.Service;
 import android.app.PictureInPictureParams;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.hardware.display.DisplayManager;
@@ -1037,46 +1038,21 @@ public class BaseStarboardBridge {
 
   @CalledByNative
   protected boolean installAppFromURL(String url) {
-    java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
-    android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    executor.execute(() -> {
-      java.io.File apkFile = new java.io.File(mAppContext.getFilesDir(), "downloaded_app.apk");
-      boolean success = false;
-      try (java.io.InputStream in = new java.net.URL(url).openStream();
-           java.io.OutputStream out = new java.io.FileOutputStream(apkFile)) {
-        byte[] buffer = new byte[8192];
-        int len;
-        long total = 0;
-        while ((len = in.read(buffer)) != -1) {
-          out.write(buffer, 0, len);
-          total += len;
-        }
-        out.flush();
-        success = true;
-      } catch (Exception e) {
+    Activity activity = mActivityHolder.get();
+    if (activity == null || activity.isFinishing() || activity.isDestroyed()) return false;
+    try {
+      UpdateDownloader.validateUrl(url);
+    } catch (java.io.IOException error) {
+      return false;
+    }
+    activity.runOnUiThread(() -> {
+      try {
+        activity.startActivity(new Intent(activity, CobaltUpdateActivity.class)
+            .putExtra(CobaltUpdateActivity.EXTRA_URL, url));
+      } catch (RuntimeException error) {
+        android.widget.Toast.makeText(activity, R.string.tizentube_update_start_failed,
+            android.widget.Toast.LENGTH_LONG).show();
       }
-      if (success) {
-        mainHandler.post(() -> {
-          try {
-            android.net.Uri contentUri = androidx.core.content.FileProvider.getUriForFile(
-                mAppContext,
-                mAppContext.getPackageName() + ".fileprovider",
-                apkFile);
-            android.content.Intent installIntent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
-            installIntent.setDataAndType(contentUri, "application/vnd.android.package-archive");
-            installIntent.setFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-            Activity activity = mActivityHolder.get();
-            if (activity != null) {
-              activity.startActivity(installIntent);
-            } else {
-              mAppContext.startActivity(installIntent);
-            }
-          } catch (Exception e) {
-          }
-        });
-      } else {
-      }
-      executor.shutdown();
     });
     return true;
   }

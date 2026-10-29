@@ -43,6 +43,8 @@ android_resources("cobalt_shell_java_resources") {
     "java/res/values/overlayable.xml",
     "java/res/values/rro_variables.xml",
     "java/res/values/strings.xml",
+    "java/res/values/update_strings.xml",
+    "java/res/values-es/update_strings.xml",
     "java/res/values/styles.xml",
     "java/res/xml/file_paths.xml",
   ]

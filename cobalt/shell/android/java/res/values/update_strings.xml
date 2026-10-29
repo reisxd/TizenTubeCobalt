@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 The Cobalt Authors. Licensed under the Apache License, Version 2.0. -->
+<resources>
+    <string name="tizentube_update_title">TizenTube update</string>
+    <string name="tizentube_update_progress">Downloading: %1$d%%\n%2$s of %3$s</string>
+    <string name="tizentube_update_unknown_size">Downloading: %1$s\nTotal size unavailable</string>
+    <string name="tizentube_update_retrying">Connection interrupted. Retrying (%1$d/%2$d)…</string>
+    <string name="tizentube_update_ready">Download verified. Select Install to continue with Android.</string>
+    <string name="tizentube_update_install">Install</string>
+    <string name="tizentube_update_permission">Allow this app to install updates in the Android settings, then return here.</string>
+    <string name="tizentube_update_permission_unavailable">Open Android settings and allow this app to install unknown apps. Then select Install again.</string>
+    <string name="tizentube_update_installing">The Android installer is open. Follow its prompts to finish the update.</string>
+    <string name="tizentube_update_install_cancelled">Installation was cancelled. The downloaded update is still available.</string>
+    <string name="tizentube_update_install_returned">The installer has closed. If the update did not finish, select Install to try again.</string>
+    <string name="tizentube_update_no_installer">Could not open the Android installer. You can try again or install the official APK manually.</string>
+    <string name="tizentube_update_invalid_apk">This APK is not a newer, compatible update signed with the same certificate as this app. It will not be installed.</string>
+    <string name="tizentube_update_network_error">Could not finish downloading after three attempts. Check your connection and select Try again.</string>
+    <string name="tizentube_update_storage_error">Could not save the update. Free some storage space, then select Try again.</string>
+    <string name="tizentube_update_download_error">The server did not provide a valid update download. Close this screen and check for updates again.</string>
+    <string name="tizentube_update_start_failed">Could not open the update manager. Please try again.</string>
+</resources>
