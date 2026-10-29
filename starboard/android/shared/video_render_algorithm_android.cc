@@ -54,7 +54,11 @@ VideoRenderAlgorithmAndroid::VideoRenderAlgorithmAndroid(
       release_frames_after_audio_starts_(features::FeatureList::IsEnabled(
           features::kReleaseVideoFramesAfterAudioStarts)) {
 #else
-      release_frames_after_audio_starts_(false) {
+      // Paint the first decoded frame as soon as it is ready. The audio clock
+      // can begin before the first SurfaceView frame is presented; holding the
+      // first frame until audio advances leaves the screen black during startup.
+      // Subsequent frames remain synchronized to audio by the checks in Render().
+      release_frames_after_audio_starts_(true) {
 #endif
   SB_CHECK(video_decoder_);
   video_decoder_->SetPlaybackRate(playback_rate_);

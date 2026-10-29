@@ -106,6 +106,11 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
   private Intent mLastSentIntent;
   private String mStartupUrl;
   private IntentRequestTracker mIntentRequestTracker;
+  private long mSyntheticBackDownTimeMs;
+  private int mVideoSurfaceX;
+  private int mVideoSurfaceY;
+  private int mVideoSurfaceWidth;
+  private int mVideoSurfaceHeight;
   // Tracks the status of the FLAG_KEEP_SCREEN_ON window flag.
   private Boolean mIsKeepScreenOnEnabled = false;
   private Runnable mFreezeRunnable;
@@ -378,16 +383,30 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
     finish();
   }
 
-  protected boolean dispatchKeyEventToIme(int keyCode, int action) {
+  protected boolean dispatchKeyEventToIme(KeyEvent event) {
     ImeAdapterImpl imeAdapter = getImeAdapterImpl();
-    if (imeAdapter == null) {
-      return false;
-    }
+    return imeAdapter != null && imeAdapter.dispatchKeyEvent(event);
+  }
 
+  protected boolean dispatchKeyEventToIme(int keyCode, int action) {
     // |KeyEvent| needs to be created with |downTime| and |eventTime| set. If they are not set the
     // app closes.
     long eventTime = SystemClock.uptimeMillis();
-    return imeAdapter.dispatchKeyEvent(new KeyEvent(eventTime, eventTime, action, keyCode, 0));
+    long downTime = eventTime;
+    if (keyCode == KeyEvent.KEYCODE_BACK) {
+      if (action == KeyEvent.ACTION_DOWN) {
+        mSyntheticBackDownTimeMs = eventTime;
+      } else if (action == KeyEvent.ACTION_UP && mSyntheticBackDownTimeMs != 0) {
+        downTime = mSyntheticBackDownTimeMs;
+      }
+    }
+
+    KeyEvent syntheticEvent = new KeyEvent(downTime, eventTime, action, keyCode, 0);
+    boolean handled = dispatchKeyEventToIme(syntheticEvent);
+    if (keyCode == KeyEvent.KEYCODE_BACK && action == KeyEvent.ACTION_UP) {
+      mSyntheticBackDownTimeMs = 0;
+    }
+    return handled;
   }
 
   @Override
@@ -400,7 +419,7 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
     if (KeyEvent.isGamepadButton(keyCode) || keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE || KeyboardUtils.isPartnerFallbackKey(keyCode)) {
       return super.onKeyDown(keyCode, event);
     }
-    return dispatchKeyEventToIme(keyCode, KeyEvent.ACTION_DOWN) || super.onKeyDown(keyCode, event);
+    return dispatchKeyEventToIme(event) || super.onKeyDown(keyCode, event);
   }
 
   @Override
@@ -411,7 +430,7 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
     if (keyCode == KeyEvent.KEYCODE_BACK) {
       mPhysicalBackKeyPressed = false;
     }
-    return dispatchKeyEventToIme(keyCode, KeyEvent.ACTION_UP) || super.onKeyUp(keyCode, event);
+    return dispatchKeyEventToIme(event) || super.onKeyUp(keyCode, event);
   }
 
   // Initially copied from ContentShellActiviy.java
@@ -509,9 +528,14 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
 
     if (!mIsCobaltUsingAndroidOverlay) {
       mVideoSurfaceView = new VideoSurfaceView(this);
+      // The player reports its bounds after the SurfaceView is attached. Keep
+      // its initial full-screen layout from covering the web UI before then.
+      mVideoSurfaceView.setAlpha(0f);
       addContentView(
           mVideoSurfaceView,
           new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+      setVideoSurfaceBounds(
+          mVideoSurfaceX, mVideoSurfaceY, mVideoSurfaceWidth, mVideoSurfaceHeight);
     } else {
       Log.i(TAG, "Do not create VideoSurfaceView.");
     }
@@ -921,14 +945,26 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
     if (mIsCobaltUsingAndroidOverlay) {
       return;
     }
-    if (width == 0 || height == 0) {
-      // The SurfaceView should be covered by our UI layer in this case.
-      return;
-    }
+    final boolean videoSurfaceVisible = width > 0 && height > 0;
     runOnUiThread(
         new Runnable() {
           @Override
           public void run() {
+            mVideoSurfaceX = x;
+            mVideoSurfaceY = y;
+            mVideoSurfaceWidth = width;
+            mVideoSurfaceHeight = height;
+            if (mVideoSurfaceView == null) {
+              return;
+            }
+            // Keep the decoder's Surface alive, but close its visible hole when
+            // the player has no video bounds. Otherwise the previous video
+            // rectangle can remain over the web UI and hide its controls.
+            mVideoSurfaceView.setAlpha(videoSurfaceVisible ? 1f : 0f);
+            if (!videoSurfaceVisible) {
+              return;
+            }
+
             LayoutParams layoutParams = mVideoSurfaceView.getLayoutParams();
             // Since mVideoSurfaceView is added directly to the Activity's content view, which is a
             // FrameLayout, we expect its layout params to become FrameLayout.LayoutParams.
@@ -963,10 +999,13 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
       Log.i(TAG, "removed mVideoSurfaceView at index:" + index);
 
       mVideoSurfaceView = new VideoSurfaceView(this);
+      mVideoSurfaceView.setAlpha(0f);
       frameLayout.addView(
           mVideoSurfaceView,
           index,
           new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+      setVideoSurfaceBounds(
+          mVideoSurfaceX, mVideoSurfaceY, mVideoSurfaceWidth, mVideoSurfaceHeight);
       Log.i(TAG, "inserted new mVideoSurfaceView at index:" + index);
     } else {
       Log.w(TAG, "Unexpected surface view parent class " + parent.getClass().getName());
