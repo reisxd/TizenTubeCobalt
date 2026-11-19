@@ -222,6 +222,7 @@ android_library("cobalt_main_java") {
       "apk/app/src/main/java/dev/cobalt/coat/CobaltA11yHelper.java",
       "apk/app/src/main/java/dev/cobalt/coat/CobaltActivity.java",
       "apk/app/src/main/java/dev/cobalt/coat/CobaltMediaSession.java",
+      "apk/app/src/main/java/dev/cobalt/coat/TizenTubeServers.java",
       "apk/app/src/main/java/dev/cobalt/coat/PlatformError.java",
       "apk/app/src/main/java/dev/cobalt/coat/StarboardBridge.java",
       "apk/app/src/main/java/dev/cobalt/coat/VolumeStateReceiver.java",

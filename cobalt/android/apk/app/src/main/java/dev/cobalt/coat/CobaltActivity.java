@@ -101,6 +101,7 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
 
   private boolean mForceCreateNewVideoSurfaceView;
 
+  private TizenTubeServers mTizenTubeServers;
   private ShellManager mShellManager;
   private ActivityWindowAndroid mWindowAndroid;
   private Intent mLastSentIntent;
@@ -545,6 +546,8 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
     //    This makes the annotated methods in these objects accessible from JavaScript.
     JavascriptInjector javascriptInjector = JavascriptInjector.fromWebContents(webContents);
 
+    if (mTizenTubeServers != null) mTizenTubeServers.close();
+    mTizenTubeServers = TizenTubeServers.install(this, webContents);
     javascriptInjector.setAllowInspection(true);
     for (CobaltJavaScriptAndroidObject javascriptAndroidObject : mJavaScriptAndroidObjectList) {
       Log.d(
@@ -727,6 +730,7 @@ public abstract class CobaltActivity extends BaseCobaltActivity {
 
   @Override
   protected void onDestroy() {
+    if (mTizenTubeServers != null) mTizenTubeServers.close();
     unregisterNetworkRecoveryObserver();
     if (isNvidiaShield()) {
       unregisterDisplayListener();
