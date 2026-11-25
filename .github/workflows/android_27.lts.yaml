@@ -42,7 +42,7 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ env.COBALT_VERSION }} - ${{ inputs.platform }} (${{ inputs.build_type }}) [Iter ${{ inputs.run_iteration }}]
+    name: Build 27.lts.20 - ${{ inputs.platform }} (${{ inputs.build_type }}) [Iter ${{ inputs.run_iteration }}]
     runs-on: ubuntu-22.04
     timeout-minutes: 360
 
