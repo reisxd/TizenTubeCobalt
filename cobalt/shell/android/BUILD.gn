@@ -44,6 +44,13 @@ android_resources("cobalt_shell_java_resources") {
     "java/res/values/rro_variables.xml",
     "java/res/values/strings.xml",
     "java/res/values/styles.xml",
+    "java/res/values-de/strings.xml",
+    "java/res/values-es/strings.xml",
+    "java/res/values-fr/strings.xml",
+    "java/res/values-it/strings.xml",
+    "java/res/values-pl-rSP/strings.xml",
+    "java/res/values-pl/strings.xml",
+    "java/res/values-szl/strings.xml",
     "java/res/xml/file_paths.xml",
   ]
 

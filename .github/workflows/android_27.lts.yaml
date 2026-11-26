@@ -112,6 +112,36 @@ jobs:
           GCLIENT_EOF
           gclient sync --no-history
 
+      - name: Patch Cobalt Shell Resource List
+        run: |
+          cd src
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("cobalt/shell/android/BUILD.gn")
+          text = path.read_text(encoding="utf-8")
+          anchor = '    "java/res/values/styles.xml",\n'
+          locales = [
+              "java/res/values-de/strings.xml",
+              "java/res/values-es/strings.xml",
+              "java/res/values-fr/strings.xml",
+              "java/res/values-it/strings.xml",
+              "java/res/values-pl-rSP/strings.xml",
+              "java/res/values-pl/strings.xml",
+              "java/res/values-szl/strings.xml",
+          ]
+          if text.count(anchor) != 1:
+              raise SystemExit("ERROR: expected exactly one insertion anchor in BUILD.gn")
+          missing = [entry for entry in locales if f'"{entry}"' not in text]
+          if not missing:
+              print("====> All localized resources already declared; skipping patch.")
+          else:
+              additions = "".join(f'    "{entry}",\n' for entry in missing)
+              path.write_text(text.replace(anchor, anchor + additions), encoding="utf-8")
+              print(f"====> Added {len(missing)} localized resource(s) to cobalt_shell_java_resources.")
+          PY
+          git diff -- cobalt/shell/android/BUILD.gn
+
       - name: Generate Android Debug Keystore
         run: |
           OUT_DIR="out/${{ inputs.platform }}_${{ inputs.build_type }}"
