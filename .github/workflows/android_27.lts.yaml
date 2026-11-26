@@ -112,6 +112,21 @@ jobs:
           GCLIENT_EOF
           gclient sync --no-history
 
+      - name: Switch src to upstream Cobalt 27.lts.20
+        run: |
+          set -euo pipefail
+          cd src
+          git remote remove cobalt-upstream 2>/dev/null || true
+          git remote add cobalt-upstream https://github.com/youtube/cobalt.git
+          git fetch --no-tags --depth=1 cobalt-upstream \
+            +refs/tags/${COBALT_VERSION}:refs/remotes/cobalt-upstream/${COBALT_VERSION}
+          git checkout --detach refs/remotes/cobalt-upstream/${COBALT_VERSION}
+          echo "====> src checked out at $(git rev-parse HEAD) for ${COBALT_VERSION}"
+          cd ..
+          export PATH=$PWD/depot_tools:$PATH
+          gclient sync --no-history
+          echo "====> Dependencies re-synced against upstream ${COBALT_VERSION} DEPS"
+
       - name: Patch Cobalt Shell Resource List
         run: |
           cd src
