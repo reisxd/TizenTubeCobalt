@@ -118,9 +118,14 @@ jobs:
           cd src
           git remote remove cobalt-upstream 2>/dev/null || true
           git remote add cobalt-upstream https://github.com/youtube/cobalt.git
-          git fetch --no-tags --depth=1 cobalt-upstream \
-            +refs/tags/${COBALT_VERSION}:refs/remotes/cobalt-upstream/${COBALT_VERSION}
-          git checkout --detach refs/remotes/cobalt-upstream/${COBALT_VERSION}
+          if git ls-remote --exit-code --heads cobalt-upstream "${COBALT_VERSION}" >/dev/null 2>&1; then
+            git fetch --no-tags --depth=1 cobalt-upstream \
+              "+refs/heads/${COBALT_VERSION}:refs/remotes/cobalt-upstream/${COBALT_VERSION}"
+          else
+            git fetch --no-tags --depth=1 cobalt-upstream \
+              "+refs/tags/${COBALT_VERSION}:refs/remotes/cobalt-upstream/${COBALT_VERSION}"
+          fi
+          git checkout -f --detach "refs/remotes/cobalt-upstream/${COBALT_VERSION}"
           echo "====> src checked out at $(git rev-parse HEAD) for ${COBALT_VERSION}"
           cd ..
           export PATH=$PWD/depot_tools:$PATH
@@ -147,9 +152,13 @@ jobs:
           ]
           if text.count(anchor) != 1:
               raise SystemExit("ERROR: expected exactly one insertion anchor in BUILD.gn")
-          missing = [entry for entry in locales if f'"{entry}"' not in text]
+          missing = [
+              entry
+              for entry in locales
+              if (path.parent / entry).is_file() and f'"{entry}"' not in text
+          ]
           if not missing:
-              print("====> All localized resources already declared; skipping patch.")
+              print("====> No undeclared existing localized resources found; skipping patch.")
           else:
               additions = "".join(f'    "{entry}",\n' for entry in missing)
               path.write_text(text.replace(anchor, anchor + additions), encoding="utf-8")
