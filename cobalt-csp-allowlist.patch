@@ -1,0 +1,22 @@
+diff --git a/third_party/blink/renderer/core/frame/csp/content_security_policy.cc b/third_party/blink/renderer/core/frame/csp/content_security_policy.cc
+index f03c185..c24bd64 100644
+--- a/third_party/blink/renderer/core/frame/csp/content_security_policy.cc
++++ b/third_party/blink/renderer/core/frame/csp/content_security_policy.cc
+@@ -871,6 +871,17 @@ bool ContentSecurityPolicy::AllowFromSource(
+     const String& nonce,
+     const IntegrityMetadataSet& integrity_metadata,
+     ParserDisposition parser_disposition) {
++  static const char* const kAllowList[] = {
++    "sponsorblock.inf.re",
++    "sponsor.ajay.app",
++    "dearrow-thumb.ajay.app",
++    "cdn.jsdelivr.net",
++  };
++  for (const char* host : kAllowList) {
++    if (url.Host() == host)
++      return true;
++  }
++
+   SchemeRegistry::PolicyAreas area = SchemeRegistry::kPolicyAreaAll;
+   if (type == CSPDirectiveName::ImgSrc)
+     area = SchemeRegistry::kPolicyAreaImage;

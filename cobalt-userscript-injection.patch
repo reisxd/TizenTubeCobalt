@@ -1,0 +1,25 @@
+diff --git a/third_party/blink/renderer/core/dom/document.cc b/third_party/blink/renderer/core/dom/document.cc
+index c040351..d38f1d3 100644
+--- a/third_party/blink/renderer/core/dom/document.cc
++++ b/third_party/blink/renderer/core/dom/document.cc
+@@ -4006,6 +4006,20 @@ void Document::close() {
+ }
+ 
+ void Document::ImplicitClose() {
++  // TizenTube userscript injection
++  if (!getElementById(AtomicString("tizentube-userscript"))) {
++    Element* script_el = CreateRawElement(html_names::kScriptTag);
++    script_el->setAttribute(html_names::kIdAttr,
++                            AtomicString("tizentube-userscript"));
++    script_el->setAttribute(html_names::kAsyncAttr, AtomicString("true"));
++    script_el->setAttribute(html_names::kSrcAttr, AtomicString("https://cdn.jsdelivr.net/npm/@foxreis/tizentube/dist/userScript.js"));
++    if (head()) {
++      head()->AppendChild(script_el);
++    } else if (documentElement()) {
++      documentElement()->AppendChild(script_el);
++    }
++  }
++
+   DCHECK(!InStyleRecalc());
+ 
+   load_event_progress_ = kLoadEventInProgress;

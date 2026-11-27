@@ -1,0 +1,157 @@
+--- a/.github/workflows/android_27.lts.yaml
++++ b/.github/workflows/android_27.lts.yaml
+@@ -166,6 +166,154 @@
+           PY
+           git diff -- cobalt/shell/android/BUILD.gn
+ 
++      - name: Patch Cobalt CSP Allowlist
++        shell: bash
++        run: |
++          set -euo pipefail
++          cd src
++          CSP_FILE=""
++          for candidate in \
++            "third_party/blink/renderer/core/frame/csp/content_security_policy.cc" \
++            "cobalt/csp/directive_list.cc"
++          do
++            if [ -f "$candidate" ]; then
++              CSP_FILE="$candidate"
++              break
++            fi
++          done
++          if [ -z "$CSP_FILE" ]; then
++            echo "CSP target file not found, skipping allowlist patch."
++            exit 0
++          fi
++          DOMAINS=(
++            "sponsorblock.inf.re"
++            "sponsor.ajay.app"
++            "dearrow-thumb.ajay.app"
++            "cdn.jsdelivr.net"
++          )
++          MISSING=0
++          for d in "${DOMAINS[@]}"; do
++            if ! grep -qF "$d" "$CSP_FILE"; then
++              MISSING=1
++              break
++            fi
++          done
++          if [ "$MISSING" -eq 0 ]; then
++            echo "All CSP allowlist domains already present in $CSP_FILE; skipping."
++            exit 0
++          fi
++          python3 - "$CSP_FILE" "${DOMAINS[@]}" <<'PY'
++          import sys
++          from pathlib import Path
++
++          path = Path(sys.argv[1])
++          domains = sys.argv[2:]
++          text = path.read_text(encoding="utf-8")
++          missing = [d for d in domains if f'"{d}"' not in text]
++          if not missing:
++              sys.exit(0)
++
++          if "kAllowList" in text:
++              lines = text.splitlines(keepends=True)
++              out = []
++              inserted = False
++              for line in lines:
++                  out.append(line)
++                  if (
++                      not inserted
++                      and "AllowList" in line
++                      and ("{" in line or "[" in line)
++                  ):
++                      indent = line[: len(line) - len(line.lstrip(" "))] + "    "
++                      for d in missing:
++                          out.append(f'{indent}"{d}",\n')
++                      inserted = True
++              if not inserted:
++                  sys.exit(f"ERROR: kAllowList opening line not found in {path}")
++              text = "".join(out)
++          elif "AllowFromSource(" in text:
++              entries = "\n".join(f'    "{d}",' for d in missing)
++              block = (
++                  "\n  static const char* const kAllowList[] = {\n"
++                  f"{entries}\n"
++                  "  };\n"
++                  "  for (const char* host : kAllowList) {\n"
++                  "    if (url.Host() == host)\n"
++                  "      return true;\n"
++                  "  }\n"
++              )
++              anchor_pos = text.find("ContentSecurityPolicy::AllowFromSource(")
++              if anchor_pos == -1:
++                  anchor_pos = text.find("AllowFromSource(")
++              idx = text.find("{", anchor_pos)
++              if idx != -1:
++                  text = text[: idx + 1] + block + text[idx + 1 :]
++          path.write_text(text, encoding="utf-8")
++          PY
++          git diff -- "$CSP_FILE" || true
++
++      - name: Patch Document Load Event Userscript Injection
++        shell: bash
++        run: |
++          set -euo pipefail
++          cd src
++          DOC_FILE=""
++          for candidate in \
++            "third_party/blink/renderer/core/dom/document.cc" \
++            "cobalt/dom/document.cc"
++          do
++            if [ -f "$candidate" ]; then
++              DOC_FILE="$candidate"
++              break
++            fi
++          done
++          if [ -z "$DOC_FILE" ]; then
++            echo "Document target file not found, skipping userscript patch."
++            exit 0
++          fi
++          SCRIPT_URL="https://cdn.jsdelivr.net/npm/@foxreis/tizentube/dist/userScript.js"
++          if grep -qF "$SCRIPT_URL" "$DOC_FILE" || grep -qF "tizentube-userscript" "$DOC_FILE"; then
++            echo "Userscript injection already present in $DOC_FILE; skipping."
++            exit 0
++          fi
++          python3 - "$DOC_FILE" "$SCRIPT_URL" <<'PY'
++          import sys
++          from pathlib import Path
++
++          path = Path(sys.argv[1])
++          url = sys.argv[2]
++          text = path.read_text(encoding="utf-8")
++          anchor = None
++          for candidate_anchor in ("Document::ImplicitClose()", "DispatchOnLoadEvent()"):
++              pos = text.find(candidate_anchor)
++              if pos != -1:
++                  brace_pos = text.find("{", pos)
++                  if brace_pos != -1:
++                      anchor = brace_pos + 1
++                      break
++          if anchor is None:
++              print("Target anchor not found in document.cc; skipping.", file=sys.stderr)
++              sys.exit(0)
++          snippet = f"""
++            // TizenTube userscript injection
++            if (!getElementById(AtomicString("tizentube-userscript"))) {{
++              Element* script_el = CreateRawElement(html_names::kScriptTag);
++              script_el->setAttribute(html_names::kIdAttr,
++                                      AtomicString("tizentube-userscript"));
++              script_el->setAttribute(html_names::kAsyncAttr, AtomicString("true"));
++              script_el->setAttribute(html_names::kSrcAttr, AtomicString("{url}"));
++              if (head()) {{
++                head()->AppendChild(script_el);
++              }} else if (documentElement()) {{
++                documentElement()->AppendChild(script_el);
++              }}
++            }}
++          """
++          updated = text[:anchor] + snippet + text[anchor:]
++          path.write_text(updated, encoding="utf-8")
++          PY
++          git diff -- "$DOC_FILE" || true
++
+       - name: Generate Android Debug Keystore
+         run: |
+           OUT_DIR="out/${{ inputs.platform }}_${{ inputs.build_type }}"
